@@ -29,8 +29,9 @@ func getDNSResult(fqdn, dnsServer string, DNStype uint16) ([]string, error) {
 	var ips []string
 	msg.SetQuestion(dns.Fqdn(fqdn), DNStype)
 	in, err := dns.Exchange(&msg, dnsServer)
+	print(".")
 	if err != nil {
-		panic(err)
+		print("x")
 	}
 	if len(in.Answer) < 1 {
 		return ips, err
@@ -60,8 +61,12 @@ func main() {
 	)
 	flag.Parse()
 	if *flDomain == "" || *flWordlist == "" {
-		fmt.Println("Usage: ./dnsclient -domain example.com -wordlist wordlist.txt")
+		fmt.Println("Usage: ./dnsenum -domain example.com -wordlist wordlist.txt")
 		flag.PrintDefaults()
+		return
+	}
+	if *flThreads < 1 || *flThreads > 100 {
+		fmt.Println("Threads must be between 1 and 100")
 		return
 	}
 	fh, err := os.Open(*flWordlist)
@@ -101,6 +106,10 @@ func main() {
 	<-tracker
 
 	res := tabwriter.NewWriter(os.Stdout, 0, 8, 4, ' ', 0)
+	fmt.Println("\n=====================================")
+	fmt.Fprintf(res, "Subdomain\tIP\n")
+	fmt.Println("=====================================")
+
 	for _, r := range results {
 		fmt.Fprintf(res, "%s\t%s\n", r.Subdomain, r.IP)
 	}
